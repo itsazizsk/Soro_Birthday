@@ -41,6 +41,26 @@
             z-index: 1;
         }
 
+        /* Transparent Overlay Image */
+        #transparent-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5; /* Between background (z-index: 1) and content (z-index: 10) */
+            pointer-events: none; /* Allow clicks to pass through */
+            opacity: 0.15; /* Adjust transparency - 0.15 = 15% opacity */
+            mix-blend-mode: multiply; /* Blend with background */
+        }
+
+        #transparent-overlay img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover entire screen */
+            object-position: center;
+        }
+
         #content {
             position: relative;
             z-index: 10;
@@ -279,6 +299,11 @@
             .gallery-item {
                 padding-top: 100%;
             }
+
+            /* Adjust overlay opacity for mobile */
+            #transparent-overlay {
+                opacity: 0.1;
+            }
         }
 
         @media (max-width: 480px) {
@@ -363,6 +388,34 @@
             cursor: pointer;
             z-index: 1001;
         }
+
+        /* Overlay Toggle Button */
+        .overlay-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .overlay-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .overlay-toggle i {
+            font-size: 24px;
+            color: #3b82f6;
+        }
     </style>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -372,8 +425,21 @@
     <div id="app">
         <div id="canvas-container"></div>
 
+        <!-- Transparent Overlay Image -->
+        <!-- REPLACE "overlay.png" WITH YOUR TRANSPARENT IMAGE FILE -->
+        <div id="transparent-overlay">
+            <img src="overlay.png" alt="Decorative Overlay" 
+                 onload="overlayLoaded()" 
+                 onerror="overlayError()">
+        </div>
+
         <div id="progress-container">
             <div id="progress-bar"></div>
+        </div>
+
+        <!-- Overlay Toggle Button -->
+        <div class="overlay-toggle" id="overlayToggle" title="Toggle Overlay">
+            <i class="fas fa-layer-group"></i>
         </div>
 
         <!-- Image Modal -->
@@ -438,7 +504,6 @@
                 
                 <!-- Main Memory Image with Fallback -->
                 <div class="image-container" id="mainImageContainer">
-                    <!-- Placeholder will be shown initially -->
                     <div class="image-placeholder" id="imagePlaceholder">
                         <i class="fas fa-heart"></i>
                         <span>Loading our special memory...</span>
@@ -481,7 +546,6 @@
 
     <!-- Birthday Music -->
     <audio id="birthdayMusic" loop preload="auto">
-        <!-- REPLACE THIS WITH YOUR MUSIC FILE -->
         <source src="music.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
@@ -595,6 +659,53 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Transparent Overlay Functions
+        function overlayLoaded() {
+            console.log('Transparent overlay loaded successfully');
+            // Optional: Add some animation or effect
+            const overlay = document.getElementById('transparent-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 1s ease';
+                overlay.style.opacity = '0.15';
+            }, 500);
+        }
+
+        function overlayError() {
+            console.error('Failed to load overlay image');
+            // Hide the overlay container if image fails to load
+            document.getElementById('transparent-overlay').style.display = 'none';
+        }
+
+        // Overlay Toggle Functionality
+        const overlayToggle = document.getElementById('overlayToggle');
+        const overlayContainer = document.getElementById('transparent-overlay');
+        let overlayVisible = true;
+
+        overlayToggle.addEventListener('click', function() {
+            overlayVisible = !overlayVisible;
+            if (overlayVisible) {
+                overlayContainer.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-layer-group"></i>';
+                this.title = 'Hide Overlay';
+                // Fade in
+                overlayContainer.style.opacity = '0';
+                setTimeout(() => {
+                    overlayContainer.style.transition = 'opacity 0.5s ease';
+                    overlayContainer.style.opacity = '0.15';
+                }, 10);
+            } else {
+                // Fade out then hide
+                overlayContainer.style.transition = 'opacity 0.5s ease';
+                overlayContainer.style.opacity = '0';
+                setTimeout(() => {
+                    overlayContainer.style.display = 'none';
+                }, 500);
+                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                this.title = 'Show Overlay';
+            }
         });
 
         // Image Loading Functions
