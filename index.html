@@ -1,189 +1,663 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Happy Birthday Jaan ❤️</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Tailwind CDN -->
+    <title>Happy Birthday Jaan ❤️</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #ffe4e6, #fff1f2);
-            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            touch-action: pan-y pinch-zoom;
+            background: linear-gradient(135deg, #f9a8d4, #f3e8ff);
+        }
+
+        #app {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .step {
-            display: none;
-            padding: 2rem;
+            width: 100%;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            display: none;
         }
 
         .step.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
             display: block;
         }
 
         .btn {
             background: linear-gradient(135deg, #ec4899, #f43f5e);
             color: white;
+            border: none;
             padding: 12px 24px;
-            border-radius: 999px;
-            font-weight: bold;
-            transition: transform 0.2s;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+            transition: all 0.3s ease;
         }
 
         .btn:hover {
-            transform: scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
         }
 
         .text-gradient {
-            background: linear-gradient(to right, #ec4899, #f43f5e);
+            background: linear-gradient(135deg, #ec4899, #f43f5e, #f59e0b);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
         }
 
-        /* ✅ MOBILE SCROLL FIX */
+        .heart-beat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            25% {
+                transform: scale(1.1);
+            }
+
+            50% {
+                transform: scale(1);
+            }
+
+            75% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .reason-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .reason-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        #progress-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 400px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            z-index: 100;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ec4899, #f43f5e);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Image Gallery Styles */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .memory-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .memory-img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Mobile Optimization */
         @media (max-width: 768px) {
-            body {
-                overflow-y: auto !important;
-                height: auto !important;
+            .step {
+                padding: 30px 15px;
+                margin: 20px auto;
             }
 
-            .step {
-                min-height: 100vh;
-                overflow-y: auto;
-                position: relative;
+            .emoji {
+                font-size: 2.5rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .memory-img {
+                height: 120px;
             }
         }
 
-        html, body {
-            -webkit-overflow-scrolling: touch;
+        @media (max-width: 480px) {
+            .step {
+                padding: 20px 10px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .memory-img {
+                height: 180px;
+            }
+        }
+
+        /* Music Player Styles */
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .music-player i {
+            font-size: 24px;
+            color: #ec4899;
         }
     </style>
+    <!-- Font Awesome for music icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
+    <div id="app">
+        <div id="canvas-container"></div>
 
-<!-- STEP 1 -->
-<div class="step active" id="step1">
-    <div class="emoji text-6xl mb-4">🎉</div>
-    <h1 class="text-4xl font-bold mb-6 text-gradient">
-        Happy Birthday, jaan ❤️
-    </h1>
-    <p class="text-lg text-gray-700 mb-8">
-        Today is not just your birthday…  
-        it’s the day my favorite person was born 💕
-    </p>
-    <button class="btn" onclick="nextStep()">Start the Surprise</button>
-</div>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
 
-<!-- STEP 2 -->
-<div class="step" id="step2">
-    <div class="emoji text-6xl mb-4">💖</div>
-    <h2 class="text-3xl font-bold mb-6 text-gradient">
-        A Little Note for You
-    </h2>
-    <p class="text-lg text-gray-700 mb-8">
-        You are the smile I didn’t know I needed,  
-        the comfort I always searched for.  
-        With you, jaan, everything feels right ✨
-    </p>
-    <button class="btn" onclick="nextStep()">Next</button>
-</div>
+        <!-- Music Player -->
+        <div class="music-player" id="musicToggle">
+            <i class="fas fa-music"></i>
+        </div>
 
-<!-- STEP 3 -->
-<div class="step" id="step3">
-    <div class="emoji text-6xl mb-4">🥰</div>
-    <h2 class="text-3xl font-bold mb-6 text-gradient">
-        One Special Moment
-    </h2>
+        <div id="content">
+            <!-- Step 1: Initial Reveal -->
+            <div class="step active" id="step1">
+                <div class="emoji heart-beat">❤️</div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-6 text-gradient">Hey Jaan ❤️</h1>
+                <p class="text-xl text-gray-700 mb-8">I made something special for my beautiful jaan...</p>
+                <button class="btn" id="start-btn">Let's Begin My Love</button>
+            </div>
 
-    <div class="flex justify-center mb-6">
-        <img src="crush.webp" height="200" width="200"
-             class="rounded-xl shadow-lg" alt="">
+            <!-- Step 2: Birthday Message -->
+            <div class="step" id="step2">
+                <div class="emoji">🎉</div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gradient">Happy Birthday, My Jaan! 🎂</h2>
+                <p class="text-lg text-gray-700 mb-6">
+                    On your special day, I want you to know how incredibly amazing you are, jaan. 
+                    Your smile brightens my entire world, your laughter is my favorite melody, 
+                    and your presence makes every moment absolutely magical. You mean everything to me 💕
+                </p>
+                <button class="btn" id="next-btn-2">What makes you so special, jaan?</button>
+            </div>
+
+            <!-- Step 3: Reasons You're Amazing -->
+            <div class="step" id="step3">
+                <h2 class="text-3xl md:text-4xl font-bold mb-8 text-gradient">Here's why you're my everything, jaan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="reason-card">
+                        <div class="emoji text-3xl">✨</div>
+                        <h3 class="text-xl font-bold mb-2 text-pink-600">Your Beautiful Heart</h3>
+                        <p class="text-gray-700">The way you care about others with so much love, jaan. You have the most beautiful heart I've ever known.</p>
+                    </div>
+                    <div class="reason-card">
+                        <div class="emoji text-3xl">😊</div>
+                        <h3 class="text-xl font-bold mb-2 text-pink-600">Your Mesmerizing Smile</h3>
+                        <p class="text-gray-700">It lights up every room you enter and stays in my heart all day, every day, jaan.</p>
+                    </div>
+                    <div class="reason-card">
+                        <div class="emoji text-3xl">🌟</div>
+                        <h3 class="text-xl font-bold mb-2 text-pink-600">Your Amazing Spirit</h3>
+                        <p class="text-gray-700">Your passion and energy are absolutely contagious, jaan. You make my life so exciting!</p>
+                    </div>
+                </div>
+                <button class="btn" id="next-btn-3">Show me our memories, jaan</button>
+            </div>
+
+            <!-- Step 4: Memory Lane -->
+            <div class="step" id="step4">
+                <div class="emoji">📸</div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gradient">Our Beautiful Memories, Jaan 💖</h2>
+                
+                <!-- Main Memory Image -->
+                <div class="mb-8">
+                    <img src="Image1.jpg" alt="Our special memory" class="w-full max-w-md mx-auto rounded-xl shadow-lg mb-4">
+                    <p class="text-lg text-gray-700 italic">This moment with you is forever in my heart, jaan ❤️</p>
+                </div>
+
+                <!-- Image Gallery -->
+                <div class="gallery-grid">
+                    <!-- REPLACE THESE URLs WITH YOUR GOOGLE DRIVE IMAGE URLs -->
+                    <img src="Image3.jpg" alt="Memory 3" class="memory-img">
+                    <img src="Image4.jpg" alt="Memory 4" class="memory-img">
+                    <img src="Image5.jpg" alt="Memory 5" class="memory-img">
+                    <img src="Image6.jpg" alt="Memory 6" class="memory-img">
+                    <img src="Image7.jpg" alt="Memory 7" class="memory-img">
+                    <img src="Image8.jpg" alt="Memory 8" class="memory-img">
+                    <img src="Image9.jpg" alt="Memory 9" class="memory-img">
+                    <img src="Image10.jpg" alt="Memory 10" class="memory-img">
+                </div>
+
+                <p class="text-lg text-gray-700 mb-6 mt-4">
+                    Every single moment with you becomes a cherished memory, my jaan. 
+                    Whether we're laughing together or just enjoying the silence, 
+                    every second with you is always so special and precious to me.
+                </p>
+                <button class="btn" id="next-btn-4">One Last Thing, My Love</button>
+            </div>
+
+            <!-- Step 5: Final Wish -->
+            <div class="step" id="step5">
+                <div class="emoji">🎂</div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gradient">My Birthday Wish For You, Jaan</h2>
+                <p class="text-lg text-gray-700 mb-8">
+                    May your year be filled with endless joy, beautiful laughter, and all your dreams coming true. 
+                    May you always know how incredibly special you are to me and to everyone lucky enough to know you, jaan.
+                </p>
+                <p class="text-xl font-semibold text-pink-600 mb-8">
+                    Happy Birthday, My Beautiful Jaan! ❤️<br>
+                    You are my everything 💕
+                </p>
+                <button class="btn" id="confetti-btn">Celebrate With Me!</button>
+                <p class="mt-8 text-gray-500">Made with all my love ❤️ just for you, jaan</p>
+            </div>
+        </div>
     </div>
 
-    <p class="text-lg text-gray-700 mb-8">
-        This smile… this moment…  
-        I keep it close to my heart forever ❤️
-    </p>
+    <!-- Birthday Music -->
+    <audio id="birthdayMusic" loop preload="auto">
+        <!-- REPLACE THIS WITH YOUR MUSIC FILE -->
+        <source src="music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
-    <button class="btn" onclick="nextStep()">Memories</button>
-</div>
+    <script>
+        // Three.js Heart Background
+        const container = document.getElementById('canvas-container');
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
 
-<!-- STEP 4: MEMORY LANE -->
-<div class="step" id="step4">
-    <div class="emoji text-6xl mb-4">📸</div>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
 
-    <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gradient">
-        Our Beautiful Memories, jaan 💖
-    </h2>
+        // Improved Heart Geometry
+        const x = 0, y = 0;
+        const heartShape = new THREE.Shape();
+        heartShape.moveTo(x + 0.5, y + 0.5);
+        heartShape.bezierCurveTo(x + 0.5, y + 0.5, x + 1, y, x, y);
+        heartShape.bezierCurveTo(x - 1, y, x - 1, y + 1.5, x - 1, y + 1.5);
+        heartShape.bezierCurveTo(x - 1, y + 2.5, x + 0.5, y + 3.5, x + 0.5, y + 3.5);
+        heartShape.bezierCurveTo(x + 0.5, y + 3.5, x + 2, y + 2.5, x + 2, y + 1.5);
+        heartShape.bezierCurveTo(x + 2, y + 1.5, x + 2, y, x + 1, y);
+        heartShape.bezierCurveTo(x + 0.5, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-    <div class="bg-gradient-to-r from-pink-200 to-rose-200 rounded-xl p-6 mb-8
-                grid grid-cols-2 gap-4 place-items-center">
+        const extrudeSettings = {
+            depth: 0.5,
+            bevelEnabled: true,
+            bevelSegments: 3,
+            bevelSize: 0.2,
+            bevelThickness: 0.3
+        };
 
-        <img src="Image1.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image3.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image4.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image5.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image6.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image7.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image8.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image9.png" class="rounded-lg shadow-lg" alt="">
-        <img src="Image10.png" class="rounded-lg shadow-lg" alt="">
+        const heartGeometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
 
-    </div>
+        // Create multiple hearts with different colors and properties
+        const hearts = [];
+        const colors = [
+            0xff6b6b, 0xff8e8e, 0xffb3b3, 0xffd8d8,
+            0xff9e9e, 0xffc1c1, 0xff6b8e, 0xff8eb3
+        ];
 
-    <p class="text-lg text-gray-700 mb-8 italic">
-        Every picture with you, jaan ❤️,  
-        is a piece of my heart captured forever.
-    </p>
+        for (let i = 0; i < 25; i++) {
+            const material = new THREE.MeshPhongMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)],
+                emissive: 0xff0000,
+                emissiveIntensity: 0.1,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.9
+            });
 
-    <button class="btn" onclick="nextStep()">Final Message</button>
-</div>
+            const heart = new THREE.Mesh(heartGeometry, material);
 
-<!-- STEP 5 -->
-<div class="step" id="step5">
-    <div class="emoji text-6xl mb-4">🎂</div>
-    <h2 class="text-4xl font-bold mb-6 text-gradient">
-        Happy Birthday, My Love ❤️
-    </h2>
-    <p class="text-lg text-gray-700 mb-6">
-        I wish you endless smiles,  
-        peaceful days,  
-        and a life filled with love —  
-        especially mine 😉
-    </p>
-    <p class="text-xl font-semibold text-pink-600">
-        Forever yours,  
-        with all my heart 💕
-    </p>
-</div>
+            // Random position and scale
+            heart.position.x = (Math.random() - 0.5) * 50;
+            heart.position.y = (Math.random() - 0.5) * 50;
+            heart.position.z = (Math.random() - 0.5) * 50;
 
-<!-- 🎵 Birthday Music -->
-<audio id="birthdayMusic" loop>
-    <source src="music.mp3" type="audio/mpeg">
-</audio>
+            const scale = Math.random() * 0.8 + 0.5;
+            heart.scale.set(scale, scale, scale);
 
-<script>
-    let currentStep = 1;
+            // Random rotation
+            heart.rotation.x = Math.random() * Math.PI;
+            heart.rotation.y = Math.random() * Math.PI;
 
-    function nextStep() {
-        document.getElementById(`step${currentStep}`).classList.remove('active');
-        currentStep++;
-        document.getElementById(`step${currentStep}`).classList.add('active');
-    }
+            // Store animation properties
+            heart.userData = {
+                speedX: Math.random() * 0.02 - 0.01,
+                speedY: Math.random() * 0.02 - 0.01,
+                speedZ: Math.random() * 0.02 - 0.01,
+                rotationSpeedX: Math.random() * 0.01,
+                rotationSpeedY: Math.random() * 0.01,
+                originalX: heart.position.x,
+                originalY: heart.position.y,
+                originalZ: heart.position.z,
+                floatDistance: 2 + Math.random() * 3
+            };
 
-    // Mobile-safe music play
-    document.addEventListener('click', function () {
-        const music = document.getElementById('birthdayMusic');
-        if (music.paused) {
-            music.play().catch(() => {});
+            scene.add(heart);
+            hearts.push(heart);
         }
-    }, { once: true });
-</script>
 
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Animate hearts
+            hearts.forEach(heart => {
+                // Floating animation
+                const time = Date.now() * 0.001;
+                heart.position.x = heart.userData.originalX + Math.sin(time * heart.userData.speedX * 10) * heart.userData.floatDistance;
+                heart.position.y = heart.userData.originalY + Math.sin(time * heart.userData.speedY * 10) * heart.userData.floatDistance;
+                heart.position.z = heart.userData.originalZ + Math.sin(time * heart.userData.speedZ * 10) * heart.userData.floatDistance;
+
+                // Rotation
+                heart.rotation.x += heart.userData.rotationSpeedX;
+                heart.rotation.y += heart.userData.rotationSpeedY;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Step Navigation
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function updateProgressBar() {
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function showStep(stepNumber) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+
+            // Show current step
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+
+            // Update progress bar
+            updateProgressBar();
+
+            // Special effect for last step
+            if (stepNumber === totalSteps) {
+                document.getElementById('confetti-btn').classList.add('animate-pulse');
+            }
+
+            // Scroll to top of step on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById(`step${stepNumber}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Button event listeners
+        document.getElementById('start-btn').addEventListener('click', () => {
+            currentStep = 2;
+            showStep(currentStep);
+        });
+
+        document.getElementById('next-btn-2').addEventListener('click', () => {
+            currentStep = 3;
+            showStep(currentStep);
+        });
+
+        document.getElementById('next-btn-3').addEventListener('click', () => {
+            currentStep = 4;
+            showStep(currentStep);
+        });
+
+        document.getElementById('next-btn-4').addEventListener('click', () => {
+            currentStep = 5;
+            showStep(currentStep);
+        });
+
+        // Confetti button
+        document.getElementById('confetti-btn').addEventListener('click', () => {
+            // Standard confetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ff0000', '#ff69b4', '#ff1493', '#ffc0cb']
+            });
+
+            // Heart-shaped confetti
+            setTimeout(() => {
+                confetti({
+                    particleCount: 30,
+                    spread: 60,
+                    origin: { y: 0.5 },
+                    shapes: ['heart'],
+                    colors: ['#ff0000', '#ff69b4']
+                });
+            }, 300);
+
+            // More hearts from different directions
+            setTimeout(() => {
+                confetti({
+                    particleCount: 20,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    shapes: ['heart'],
+                    colors: ['#ff0000', '#ff69b4']
+                });
+
+                confetti({
+                    particleCount: 20,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    shapes: ['heart'],
+                    colors: ['#ff0000', '#ff69b4']
+                });
+            }, 600);
+
+            // Make hearts float up from the background
+            hearts.forEach(heart => {
+                gsap.to(heart.position, {
+                    y: heart.position.y - 30,
+                    duration: 3,
+                    ease: "power1.out"
+                });
+
+                gsap.to(heart.material, {
+                    opacity: 0,
+                    duration: 3,
+                    ease: "power1.out"
+                });
+            });
+        });
+
+        // Music player functionality
+        const music = document.getElementById('birthdayMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = musicToggle.querySelector('i');
+        let isMusicPlaying = false;
+
+        // Function to play music
+        function playMusic() {
+            if (music.paused) {
+                music.play()
+                    .then(() => {
+                        isMusicPlaying = true;
+                        musicIcon.className = 'fas fa-volume-up';
+                        musicToggle.style.background = 'rgba(236, 72, 153, 0.2)';
+                    })
+                    .catch(error => {
+                        console.log("Autoplay prevented. User interaction needed.");
+                    });
+            }
+        }
+
+        // Function to toggle music
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                music.pause();
+                musicIcon.className = 'fas fa-music';
+                musicToggle.style.background = 'rgba(255, 255, 255, 0.9)';
+            } else {
+                music.play();
+                musicIcon.className = 'fas fa-volume-up';
+                musicToggle.style.background = 'rgba(236, 72, 153, 0.2)';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        // Auto-play music on first user interaction
+        function initMusic() {
+            document.addEventListener('click', function initMusicOnce() {
+                playMusic();
+                document.removeEventListener('click', initMusicOnce);
+            }, { once: true });
+
+            // Also try to play when page loads (some browsers allow this)
+            setTimeout(playMusic, 1000);
+        }
+
+        // Initialize music player
+        musicToggle.addEventListener('click', toggleMusic);
+        initMusic();
+
+        // Initialize progress bar
+        updateProgressBar();
+
+        // Enable scrolling on mobile
+        document.addEventListener('touchmove', function(e) {
+            // Allow default scrolling behavior
+        }, { passive: true });
+
+        // Prevent overscroll on body
+        document.body.addEventListener('touchstart', function(e) {
+            if (e.target === this) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
 </body>
 </html>
