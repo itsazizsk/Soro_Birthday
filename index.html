@@ -170,12 +170,14 @@
             transition: width 0.5s ease;
         }
 
-        /* Improved Image Gallery Styles */
+        /* Image Container with Fallback */
         .image-container {
             width: 100%;
             margin: 15px 0;
             display: flex;
             justify-content: center;
+            min-height: 300px;
+            position: relative;
         }
 
         .main-image {
@@ -184,8 +186,33 @@
             object-fit: contain;
             border-radius: 15px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            background: white;
-            padding: 5px;
+            background: #f8f8f8;
+            padding: 10px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .main-image.loaded {
+            opacity: 1;
+        }
+
+        .image-placeholder {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ec4899;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .image-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 10px;
         }
 
         .gallery-grid {
@@ -199,11 +226,11 @@
         .gallery-item {
             position: relative;
             width: 100%;
-            padding-top: 100%; /* Creates square aspect ratio */
+            padding-top: 100%;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            background: white;
+            background: #f8f8f8;
             transition: all 0.3s ease;
         }
 
@@ -220,7 +247,13 @@
             height: 100%;
             object-fit: contain;
             padding: 8px;
-            background: white;
+            background: #f8f8f8;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .gallery-img.loaded {
+            opacity: 1;
         }
 
         /* Mobile Optimization */
@@ -244,7 +277,7 @@
             }
 
             .gallery-item {
-                padding-top: 100%; /* Square aspect ratio for mobile too */
+                padding-top: 100%;
             }
         }
 
@@ -269,7 +302,7 @@
             }
             
             .gallery-item {
-                padding-top: 120%; /* Slightly taller for very small screens */
+                padding-top: 120%;
             }
         }
 
@@ -301,7 +334,7 @@
             color: #ec4899;
         }
 
-        /* Image Modal for Better Viewing */
+        /* Image Modal */
         .image-modal {
             display: none;
             position: fixed;
@@ -330,18 +363,8 @@
             cursor: pointer;
             z-index: 1001;
         }
-
-        /* Loading animation for images */
-        .image-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ec4899;
-            font-size: 20px;
-        }
     </style>
-    <!-- Font Awesome for music icon -->
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -413,39 +436,21 @@
                 <div class="emoji">📸</div>
                 <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gradient">Our Beautiful Memories, Jaan 💖</h2>
                 
-                <!-- Main Memory Image -->
-                <div class="image-container">
-                    <img src="Image1.jpg" alt="Our special memory" class="main-image" id="mainMemoryImage">
+                <!-- Main Memory Image with Fallback -->
+                <div class="image-container" id="mainImageContainer">
+                    <!-- Placeholder will be shown initially -->
+                    <div class="image-placeholder" id="imagePlaceholder">
+                        <i class="fas fa-heart"></i>
+                        <span>Loading our special memory...</span>
+                    </div>
+                    <img src="Image1.jpg" alt="Our special memory" class="main-image" id="mainMemoryImage" 
+                         onload="imageLoaded(this)" onerror="imageError(this)">
                 </div>
                 <p class="text-lg text-gray-700 italic mb-4">This moment with you is forever in my heart, jaan ❤️</p>
 
                 <!-- Image Gallery -->
-                <div class="gallery-grid">
-                    <!-- REPLACE THESE URLs WITH YOUR GOOGLE DRIVE IMAGE URLs -->
-                    <div class="gallery-item" data-image="Image3.jpg">
-                        <img src="Image3.jpg" alt="Memory 3" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image4.jpg">
-                        <img src="Image4.jpg" alt="Memory 4" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image5.jpg">
-                        <img src="Image5.jpg" alt="Memory 5" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image6.jpg">
-                        <img src="Image6.jpg" alt="Memory 6" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image7.jpg">
-                        <img src="Image7.jpg" alt="Memory 7" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image8.jpg">
-                        <img src="Image8.jpg" alt="Memory 8" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image9.jpg">
-                        <img src="Image9.jpg" alt="Memory 9" class="gallery-img" loading="lazy">
-                    </div>
-                    <div class="gallery-item" data-image="Image10.jpg">
-                        <img src="Image10.jpg" alt="Memory 10" class="gallery-img" loading="lazy">
-                    </div>
+                <div class="gallery-grid" id="galleryContainer">
+                    <!-- Images will be loaded dynamically -->
                 </div>
 
                 <p class="text-lg text-gray-700 mb-6 mt-4">
@@ -492,7 +497,7 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 30;
 
-        // Improved Heart Geometry
+        // Heart Geometry
         const x = 0, y = 0;
         const heartShape = new THREE.Shape();
         heartShape.moveTo(x + 0.5, y + 0.5);
@@ -513,7 +518,7 @@
 
         const heartGeometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
 
-        // Create multiple hearts with different colors and properties
+        // Create hearts
         const hearts = [];
         const colors = [
             0xff6b6b, 0xff8e8e, 0xffb3b3, 0xffd8d8,
@@ -532,7 +537,6 @@
 
             const heart = new THREE.Mesh(heartGeometry, material);
 
-            // Random position and scale
             heart.position.x = (Math.random() - 0.5) * 50;
             heart.position.y = (Math.random() - 0.5) * 50;
             heart.position.z = (Math.random() - 0.5) * 50;
@@ -540,11 +544,9 @@
             const scale = Math.random() * 0.8 + 0.5;
             heart.scale.set(scale, scale, scale);
 
-            // Random rotation
             heart.rotation.x = Math.random() * Math.PI;
             heart.rotation.y = Math.random() * Math.PI;
 
-            // Store animation properties
             heart.userData = {
                 speedX: Math.random() * 0.02 - 0.01,
                 speedY: Math.random() * 0.02 - 0.01,
@@ -573,15 +575,12 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Animate hearts
             hearts.forEach(heart => {
-                // Floating animation
                 const time = Date.now() * 0.001;
                 heart.position.x = heart.userData.originalX + Math.sin(time * heart.userData.speedX * 10) * heart.userData.floatDistance;
                 heart.position.y = heart.userData.originalY + Math.sin(time * heart.userData.speedY * 10) * heart.userData.floatDistance;
                 heart.position.z = heart.userData.originalZ + Math.sin(time * heart.userData.speedZ * 10) * heart.userData.floatDistance;
 
-                // Rotation
                 heart.rotation.x += heart.userData.rotationSpeedX;
                 heart.rotation.y += heart.userData.rotationSpeedY;
             });
@@ -598,33 +597,122 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // Image Loading Functions
+        function imageLoaded(img) {
+            img.classList.add('loaded');
+            const placeholder = document.getElementById('imagePlaceholder');
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+        }
+
+        function imageError(img) {
+            console.error('Failed to load image:', img.src);
+            const placeholder = document.getElementById('imagePlaceholder');
+            if (placeholder) {
+                placeholder.innerHTML = '<i class="fas fa-heart-broken"></i><span>Could not load image</span>';
+                placeholder.style.background = 'linear-gradient(135deg, #fed7e2, #fbb6ce)';
+            }
+        }
+
+        // Load gallery images
+        function loadGalleryImages() {
+            const galleryContainer = document.getElementById('galleryContainer');
+            if (!galleryContainer) return;
+
+            const imageFiles = [
+                'Image3.jpg',
+                'Image4.jpg',
+                'Image5.jpg',
+                'Image6.jpg',
+                'Image7.jpg',
+                'Image8.jpg',
+                'Image9.jpg',
+                'Image10.jpg'
+            ];
+
+            galleryContainer.innerHTML = '';
+
+            imageFiles.forEach((fileName, index) => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                galleryItem.dataset.image = fileName;
+
+                const img = document.createElement('img');
+                img.src = fileName;
+                img.alt = `Memory ${index + 3}`;
+                img.className = 'gallery-img';
+                img.loading = 'lazy';
+                
+                img.onload = function() {
+                    this.classList.add('loaded');
+                };
+                
+                img.onerror = function() {
+                    console.error('Failed to load gallery image:', this.src);
+                    this.style.display = 'none';
+                    galleryItem.innerHTML = '<div class="image-placeholder" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"><i class="fas fa-image"></i><span>Memory</span></div>';
+                };
+
+                galleryItem.appendChild(img);
+                galleryContainer.appendChild(galleryItem);
+            });
+
+            // Add click event to gallery images
+            setTimeout(() => {
+                document.querySelectorAll('.gallery-img').forEach(img => {
+                    img.addEventListener('click', function() {
+                        openModal(this.src);
+                    });
+                });
+            }, 100);
+        }
+
         // Image Modal Functionality
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
         const closeModal = document.querySelector('.close-modal');
 
-        // Open modal when clicking on gallery images
-        document.querySelectorAll('.gallery-img, .main-image').forEach(img => {
-            img.addEventListener('click', function() {
-                modal.style.display = 'flex';
-                modalImg.src = this.src;
-                // Pause music when viewing image
+        function openModal(src) {
+            modal.style.display = 'flex';
+            modalImg.src = src;
+            // Pause music when viewing image
+            if (isMusicPlaying) {
                 music.pause();
                 musicIcon.className = 'fas fa-music';
                 isMusicPlaying = false;
                 musicToggle.style.background = 'rgba(255, 255, 255, 0.9)';
-            });
-        });
+            }
+        }
 
         // Close modal
         closeModal.addEventListener('click', function() {
             modal.style.display = 'none';
         });
 
-        // Close modal when clicking outside the image
+        // Close modal when clicking outside
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
                 modal.style.display = 'none';
+            }
+        });
+
+        // Preload main image when step 3 is shown
+        document.getElementById('next-btn-3').addEventListener('click', function() {
+            // Load gallery images
+            loadGalleryImages();
+            
+            // Try to load main image if not already loaded
+            const mainImage = document.getElementById('mainMemoryImage');
+            if (mainImage && !mainImage.classList.contains('loaded')) {
+                mainImage.src = mainImage.src; // Trigger reload
+            }
+        });
+
+        // Add click event to main image
+        document.getElementById('mainMemoryImage')?.addEventListener('click', function() {
+            if (this.classList.contains('loaded')) {
+                openModal(this.src);
             }
         });
 
@@ -638,23 +726,18 @@
         }
 
         function showStep(stepNumber) {
-            // Hide all steps
             document.querySelectorAll('.step').forEach(step => {
                 step.classList.remove('active');
             });
 
-            // Show current step
             document.getElementById(`step${stepNumber}`).classList.add('active');
-
-            // Update progress bar
             updateProgressBar();
 
-            // Special effect for last step
             if (stepNumber === totalSteps) {
                 document.getElementById('confetti-btn').classList.add('animate-pulse');
             }
 
-            // Scroll to top of step on mobile
+            // Scroll to top on mobile
             if (window.innerWidth <= 768) {
                 document.getElementById(`step${stepNumber}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
@@ -683,7 +766,6 @@
 
         // Confetti button
         document.getElementById('confetti-btn').addEventListener('click', () => {
-            // Standard confetti
             confetti({
                 particleCount: 150,
                 spread: 70,
@@ -691,7 +773,6 @@
                 colors: ['#ff0000', '#ff69b4', '#ff1493', '#ffc0cb']
             });
 
-            // Heart-shaped confetti
             setTimeout(() => {
                 confetti({
                     particleCount: 30,
@@ -702,7 +783,6 @@
                 });
             }, 300);
 
-            // More hearts from different directions
             setTimeout(() => {
                 confetti({
                     particleCount: 20,
@@ -723,7 +803,6 @@
                 });
             }, 600);
 
-            // Make hearts float up from the background
             hearts.forEach(heart => {
                 gsap.to(heart.position, {
                     y: heart.position.y - 30,
@@ -739,13 +818,12 @@
             });
         });
 
-        // Music player functionality
+        // Music player
         const music = document.getElementById('birthdayMusic');
         const musicToggle = document.getElementById('musicToggle');
         const musicIcon = musicToggle.querySelector('i');
         let isMusicPlaying = false;
 
-        // Function to play music
         function playMusic() {
             if (music.paused) {
                 music.play()
@@ -755,12 +833,11 @@
                         musicToggle.style.background = 'rgba(236, 72, 153, 0.2)';
                     })
                     .catch(error => {
-                        console.log("Autoplay prevented. User interaction needed.");
+                        console.log("Autoplay prevented.");
                     });
             }
         }
 
-        // Function to toggle music
         function toggleMusic() {
             if (isMusicPlaying) {
                 music.pause();
@@ -774,52 +851,41 @@
             isMusicPlaying = !isMusicPlaying;
         }
 
-        // Auto-play music on first user interaction
+        // Auto-play music
         function initMusic() {
             document.addEventListener('click', function initMusicOnce() {
                 playMusic();
                 document.removeEventListener('click', initMusicOnce);
             }, { once: true });
 
-            // Also try to play when page loads (some browsers allow this)
             setTimeout(playMusic, 1000);
         }
 
-        // Initialize music player
         musicToggle.addEventListener('click', toggleMusic);
         initMusic();
 
         // Initialize progress bar
         updateProgressBar();
 
-        // Enable scrolling on mobile
-        document.addEventListener('touchmove', function(e) {
-            // Allow default scrolling behavior
-        }, { passive: true });
+        // Mobile scrolling
+        document.addEventListener('touchmove', function(e) {}, { passive: true });
 
-        // Prevent overscroll on body
-        document.body.addEventListener('touchstart', function(e) {
-            if (e.target === this) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Image preloader for better UX
+        // Preload main image on page load
         window.addEventListener('load', function() {
-            const images = document.querySelectorAll('img');
-            images.forEach(img => {
-                // Add loaded class when image loads
-                img.addEventListener('load', function() {
-                    this.style.opacity = '1';
-                });
-                
-                // Set initial opacity
-                img.style.opacity = '0';
-                img.style.transition = 'opacity 0.5s ease';
-            });
+            const mainImage = document.getElementById('mainMemoryImage');
+            if (mainImage) {
+                // Force image load
+                const img = new Image();
+                img.src = mainImage.src;
+                img.onload = function() {
+                    mainImage.classList.add('loaded');
+                    document.getElementById('imagePlaceholder').style.display = 'none';
+                };
+                img.onerror = function() {
+                    console.error('Main image failed to load on page load');
+                };
+            }
         });
     </script>
 </body>
 </html>
-
-
