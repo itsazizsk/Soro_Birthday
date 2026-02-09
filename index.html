@@ -974,4 +974,35 @@
         }
 
         function initMusic() {
-            document.addEventListener
+            document.addEventListener('click', function initMusicOnce() {
+                playMusic();
+                document.removeEventListener('click', initMusicOnce);
+            }, { once: true });
+
+            setTimeout(playMusic, 1000);
+        }
+
+        musicToggle.addEventListener('click', toggleMusic);
+        initMusic();
+
+        updateProgressBar();
+
+        document.addEventListener('touchmove', function(e) {}, { passive: true });
+
+        window.addEventListener('load', function() {
+            const mainImage = document.getElementById('mainMemoryImage');
+            if (mainImage) {
+                const img = new Image();
+                img.src = mainImage.src;
+                img.onload = function() {
+                    mainImage.classList.add('loaded');
+                    document.getElementById('imagePlaceholder').style.display = 'none';
+                };
+                img.onerror = function() {
+                    console.error('Main image failed to load on page load');
+                };
+            }
+        });
+    </script>
+</body>
+</html>
