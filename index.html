@@ -50,7 +50,7 @@
             height: 100%;
             z-index: 5;
             pointer-events: none;
-            opacity: 0.3; /* Increased opacity for better visibility */
+            opacity: 0.6; /* Increased opacity for better visibility */
             mix-blend-mode: overlay; /* Changed to overlay for better blending */
         }
 
@@ -714,7 +714,7 @@
                 overlayContainer.style.opacity = '0';
                 setTimeout(() => {
                     overlayContainer.style.transition = 'opacity 0.5s ease';
-                    overlayContainer.style.opacity = '0.3';
+                    overlayContainer.style.opacity = '0.6';
                 }, 10);
             } else {
                 overlayContainer.style.transition = 'opacity 0.5s ease';
@@ -1006,3 +1006,4 @@
     </script>
 </body>
 </html>
+
